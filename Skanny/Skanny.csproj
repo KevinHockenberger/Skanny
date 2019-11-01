@@ -34,9 +34,14 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>include\scanner.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -63,6 +68,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsStatic.cs" />
     <Compile Include="winMain.xaml.cs">
       <DependentUpon>winMain.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -93,6 +99,42 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\X-neon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\maximize.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\normalize.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\minimize.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\scanner.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\scanner.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\recycle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\camera.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\scanner-white.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\settings.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\trash.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\joinPdf.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
