@@ -18,9 +18,9 @@ namespace Skanny
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
-  public partial class MainWindow : Window
+  public partial class winMain : Window
   {
-    public MainWindow()
+    public winMain()
     {
       InitializeComponent();
     }
