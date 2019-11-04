@@ -245,18 +245,134 @@
         </Setter.Value>
       </Setter>
     </Style>
+
+
+    <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
+
+
+    <Style TargetType="{x:Type ListView}">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Setter Property="ItemsPanel">
+        <Setter.Value>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="FocusVisual">
+      <Setter Property="Control.Template">
+        <Setter.Value>
+          <ControlTemplate>
+            <Rectangle Margin="2" SnapsToDevicePixels="true" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <SolidColorBrush x:Key="Item.MouseOver.Background" Color="#1F26A0DA"/>
+    <SolidColorBrush x:Key="Item.MouseOver.Border" Color="#a826A0Da"/>
+    <SolidColorBrush x:Key="Item.SelectedInactive.Background" Color="#3DDADADA"/>
+    <SolidColorBrush x:Key="Item.SelectedInactive.Border" Color="#FFDADADA"/>
+    <SolidColorBrush x:Key="Item.SelectedActive.Background" Color="#3D26A0DA"/>
+    <SolidColorBrush x:Key="Item.SelectedActive.Border" Color="#FF26A0DA"/>
+    <Style TargetType="{x:Type ListViewItem}">
+      <Setter Property="SnapsToDevicePixels" Value="True"/>
+      <Setter Property="Padding" Value="4,1"/>
+      <Setter Property="HorizontalContentAlignment" Value="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
+      <Setter Property="VerticalContentAlignment" Value="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
+      <Setter Property="Background" Value="DimGray"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="3"/>
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type ListViewItem}">
+            <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+              <!--<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>-->
+              <ContentPresenter Content="{Binding}">
+                <ContentPresenter.ContentTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <Image Source="{Binding Image}" Width="{Binding Width}"/>
+                      <!--<TextBlock Text="{Binding FileSpec}" Foreground="Black"/>-->
+                      <!--<TextBlock Text="{Binding ToPdf}" Foreground="Black"/>-->
+                      <Grid Name="overlay" Background="#7F000000" Visibility="{Binding ToPdf, Converter={StaticResource VisibleIfTrueConverter}}" MouseUp="Overlay_MouseUp" Focusable="True" KeyUp="Overlay_KeyUp">
+                        <Grid.RowDefinitions>
+                          <RowDefinition/>
+                          <RowDefinition/>
+                          <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition/>
+                          <ColumnDefinition/>
+                          <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Row="1" Grid.Column="1"  Background="#7F000000" BorderBrush="black" BorderThickness="1" CornerRadius="5"  >
+                          <TextBlock Text="{Binding Index}" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="{Binding FontSize}"/>
+                        </Border>
+                      </Grid>
+                    </Grid>
+                  </DataTemplate>
+                </ContentPresenter.ContentTemplate>
+              </ContentPresenter>
+            </Border>
+            <ControlTemplate.Triggers>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="IsMouseOver" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" TargetName="Bd" Value="{StaticResource Item.MouseOver.Background}"/>
+                <Setter Property="BorderBrush" TargetName="Bd" Value="{StaticResource Item.MouseOver.Border}"/>
+              </MultiTrigger>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                  <Condition Property="IsSelected" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" TargetName="Bd" Value="{StaticResource Item.SelectedInactive.Background}"/>
+                <Setter Property="BorderBrush" TargetName="Bd" Value="{StaticResource Item.SelectedInactive.Border}"/>
+              </MultiTrigger>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="Selector.IsSelectionActive" Value="True"/>
+                  <Condition Property="IsSelected" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" TargetName="Bd" Value="{StaticResource Item.SelectedActive.Background}"/>
+                <Setter Property="BorderBrush" TargetName="Bd" Value="{StaticResource Item.SelectedActive.Border}"/>
+              </MultiTrigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="TextElement.Foreground" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+
+
+
   </Window.Resources>
   <DockPanel Background="{StaticResource BaseColor}">
     <Border DockPanel.Dock="Top" BorderThickness="1,0" MouseDown="_MouseDown" >
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/><!-- App Icon/button -->
-          <ColumnDefinition Width="Auto"/><!-- App Title -->
-          <ColumnDefinition/><!-- App Message -->
-          <ColumnDefinition Width="Auto"/><!-- App Version -->
-          <ColumnDefinition Width="Auto"/><!-- App Minimize button -->
-          <ColumnDefinition Width="Auto"/><!-- App Maximize button -->
-          <ColumnDefinition Width="Auto"/><!-- App Close button -->
+          <ColumnDefinition Width="Auto"/>
+          <!-- App Icon/button -->
+          <ColumnDefinition Width="Auto"/>
+          <!-- App Title -->
+          <ColumnDefinition/>
+          <!-- App Message -->
+          <ColumnDefinition Width="Auto"/>
+          <!-- App Version -->
+          <ColumnDefinition Width="Auto"/>
+          <!-- App Minimize button -->
+          <ColumnDefinition Width="Auto"/>
+          <!-- App Maximize button -->
+          <ColumnDefinition Width="Auto"/>
+          <!-- App Close button -->
         </Grid.ColumnDefinitions>
         <!-- App Icon/button -->
         <Button x:Name="btnApp" Width="32" Height="32" BorderThickness="1" BorderBrush="White" VerticalAlignment="Top" Click="BtnApp_Click">
@@ -268,10 +384,12 @@
         </Border>
         <Border Grid.Column="2">
           <!-- App Title -->
-        <TextBlock x:Name="txtStatus" Text="Message" Margin="5,0" VerticalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
+          <TextBlock x:Name="txtStatus" Text="Message" Margin="5,0" VerticalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
         </Border>
         <!-- App Version -->
-        <Border Grid.Column="3"><TextBlock x:Name="txtVersion" Text="1.0.0" Margin="5,0" VerticalAlignment="Center"/></Border>
+        <Border Grid.Column="3">
+          <TextBlock x:Name="txtVersion" Text="1.0.0" Margin="5,0" VerticalAlignment="Center"/>
+        </Border>
         <!-- App Minimize button -->
         <Button x:Name="btnMinimize" Width="32" Height="32" Grid.Column="4" BorderThickness="1" BorderBrush="White" VerticalAlignment="Top" Click="BtnMinimize_Click">
           <Image Source="include\minimize.png" Width="24" Height="24"/>
@@ -335,11 +453,11 @@
           <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <GridSplitter HorizontalAlignment="Stretch" Margin="0" Grid.Column="1" BorderBrush="Black" Background="#FF636363"/>
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" >
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" x:Name="LeftSidePanel">
           <Grid>
             <StackPanel>
               <Label Style="{StaticResource lblDescriptor}" Content="preview size" Margin="2,2,2,0"/>
-              <ComboBox Template="{DynamicResource cmbStyle}" x:Name="cmbSize" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:AvailableThumbSizes}}}" SelectedItem="{Binding ThumbSize}" />
+              <ComboBox Template="{DynamicResource cmbStyle}" x:Name="cmbSize" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:AvailableThumbSizes}}}" SelectionChanged="cmbSize_SelectionChanged" />
               <Button x:Name="btnScan" Margin="0,10,0,0" Padding="0,5" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
                 <StackPanel>
                   <Image Source="include/scanner.png" Height="60" Width="60">
@@ -359,8 +477,8 @@
                   <ColumnDefinition/>
                   <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <RadioButton Style="{StaticResource rdoScanOrPic}" Content="include/scanner-white.png" Height="32" IsChecked="True" Cursor="Hand"/>
-                <RadioButton Style="{StaticResource rdoScanOrPic}" Content="include/camera.png" Height="32" Grid.Column="1" Cursor="Hand"/>
+                <RadioButton x:Name="rdoScans" Style="{StaticResource rdoScanOrPic}" Content="include/scanner-white.png" Height="32" IsChecked="True" Cursor="Hand" Checked="RadioButton_Checked" Unchecked="RadioButton_Checked"/>
+                <RadioButton x:Name="rdoPics" Style="{StaticResource rdoScanOrPic}" Content="include/camera.png" Height="32" Grid.Column="1" Cursor="Hand" Checked="RadioButton_Checked" Unchecked="RadioButton_Checked"/>
               </Grid>
               <Button x:Name="btnConfig" Margin="0,10,0,0" Padding="0,2,0,2" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
                 <StackPanel>
@@ -376,19 +494,18 @@
                   <Label Content="Clean" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="btnPdf" Padding="0,2,0,2" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
+              <Button x:Name="btnPdf" Padding="0,2,0,2" Click="BtnPdf_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
                 <StackPanel>
-                  <Image Source="include/joinPdf.png" Height="32" Width="32">
-                  </Image>
+                  <Image Source="include/joinPdf.png" Width="32" Height="32" />
                   <Label Content="Join" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
                 </StackPanel>
               </Button>
             </StackPanel>
           </Grid>
-          
         </ScrollViewer>
-        <Grid Grid.Column="2">
-          
+        <Grid Grid.Column="2" >
+          <ListView x:Name="listScans" />
+          <ListView x:Name="listPics" />
         </Grid>
       </Grid>
     </Border>

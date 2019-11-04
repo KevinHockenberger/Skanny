@@ -70,5 +70,29 @@ namespace Skanny.Properties {
                 this["SidebarWidth"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("250")]
+        public int LastThumbSize {
+            get {
+                return ((int)(this["LastThumbSize"]));
+            }
+            set {
+                this["LastThumbSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PicDirectory {
+            get {
+                return ((string)(this["PicDirectory"]));
+            }
+            set {
+                this["PicDirectory"] = value;
+            }
+        }
     }
 }

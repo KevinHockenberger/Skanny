@@ -69,15 +69,15 @@ namespace Skanny
     public enum AvailableThumbSizes
     {
       [Description("X-Small")]
-      Xsmall = 100,
+      Xsmall = 50,
       [Description("Small")]
-      Small = 250,
+      Small = 100,
       [Description("Medium")]
-      Medium = 500,
+      Medium = 250,
       [Description("Large")]
-      Large = 800,
+      Large = 500,
       [Description("X-Large")]
-      Xlarge = 1200,
+      Xlarge = 1000,
     }
   static class clsStatic
   {
