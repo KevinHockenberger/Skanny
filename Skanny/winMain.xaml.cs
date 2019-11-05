@@ -123,7 +123,7 @@ namespace Skanny
       Properties.Settings.Default.LastWindowRect = this.RestoreBounds;
       Properties.Settings.Default.SidebarWidth = gridMain.ColumnDefinitions[0].Width.Value;
       Properties.Settings.Default.LastThumbSize = (int)(AvailableThumbSizes)(cmbSize.SelectedItem ?? AvailableThumbSizes.Medium);
-      Properties.Settings.Default.LastView = rdoPics.IsChecked == true ? (byte)1 : (byte)0; 
+      Properties.Settings.Default.LastView = rdoPics.IsChecked == true ? (byte)1 : (byte)0;
       Properties.Settings.Default.Save();
     }
     private void UpdateStatus(string message, System.Windows.Media.Brush background, System.Windows.Media.Brush foreground)
@@ -185,7 +185,8 @@ namespace Skanny
     }
     private void OpenSettings()
     {
-
+      winSettings w = new winSettings(){ Owner = this};
+      w.ShowDialog();
     }
     private bool StartScan(out List<System.Drawing.Image> images)
     {
@@ -255,8 +256,6 @@ namespace Skanny
     {
       if (validateScanDir())
       {
-        //if (MessageBox.Show("Place document(s) in the scanner and click ok when ready.", "Prepare Scanner", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
-        //{
         try
         {
           if (StartScan(out List<System.Drawing.Image> images))
@@ -324,7 +323,6 @@ namespace Skanny
         {
           MessageBox.Show(ex.Message);
         }
-        //}
       }
     }
     private static void AddImage(XGraphics gfx, PdfPage page, System.Drawing.Image image, double xPosition, double yPosition, double? Width = null, double? Height = null)
@@ -350,7 +348,6 @@ namespace Skanny
         // Handle exception
       }
     }
-
     private void BtnPdf_Click(object sender, RoutedEventArgs e)
     {
       foreach (var x in scans)
@@ -464,8 +461,7 @@ namespace Skanny
     {
       if (string.IsNullOrWhiteSpace(Properties.Settings.Default.ScanDirectory) || !Directory.Exists(Properties.Settings.Default.ScanDirectory))
       {
-        MessageBox.Show("Scan folder is not set or does not exist. Assigning the default location.");
-        Properties.Settings.Default.ScanDirectory = defaultScanDirectory;
+        MessageBox.Show("Scan folder is not set or does not exist. Use Settings to change the folder.");
         return false;
       }
       return true;
@@ -497,7 +493,7 @@ namespace Skanny
       var t = GetThumbnails(Properties.Settings.Default.ScanDirectory);
       if (t == null)
       {
-        Properties.Settings.Default.ScanDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        Properties.Settings.Default.ScanDirectory = defaultScanDirectory;
         t = GetThumbnails(Properties.Settings.Default.ScanDirectory);
       }
       if (t != null)
@@ -731,6 +727,11 @@ namespace Skanny
     private void BtnReload_Click(object sender, RoutedEventArgs e)
     {
       LoadImages();
+    }
+
+    private void BtnConfig_Click(object sender, RoutedEventArgs e)
+    {
+      OpenSettings();
     }
   }
 }

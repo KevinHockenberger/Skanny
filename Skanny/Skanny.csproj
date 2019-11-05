@@ -78,6 +78,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="winSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="winMain.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -87,6 +91,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="clsShared.cs" />
+    <Compile Include="winSettings.xaml.cs">
+      <DependentUpon>winSettings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WiaScanner.cs" />
     <Compile Include="winMain.xaml.cs">
       <DependentUpon>winMain.xaml</DependentUpon>
@@ -169,6 +176,15 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\check.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\X-orange.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\file-complete.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

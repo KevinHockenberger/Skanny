@@ -488,7 +488,7 @@
                 <RadioButton x:Name="rdoScans" Style="{StaticResource rdoScanOrPic}" Content="include/scanner-white.png" Height="32" IsChecked="True" Cursor="Hand" Checked="RadioButton_Checked" Unchecked="RadioButton_Checked"/>
                 <RadioButton x:Name="rdoPics" Style="{StaticResource rdoScanOrPic}" Content="include/camera.png" Height="32" Grid.Column="1" Cursor="Hand" Checked="RadioButton_Checked" Unchecked="RadioButton_Checked"/>
               </Grid>
-              <Button x:Name="btnConfig" Margin="0,10,0,0" Padding="0,2,0,2" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
+              <Button x:Name="btnConfig" Margin="0,10,0,0" Padding="0,2,0,2" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnConfig_Click" >
                 <StackPanel>
                   <Image Source="include/settings.png" Height="32" Width="32">
                   </Image>
