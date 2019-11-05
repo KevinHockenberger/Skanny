@@ -20,5 +20,20 @@
     <Setting Name="PicDirectory" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="ScanDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\\Skanny\Scans</Value>
+    </Setting>
+    <Setting Name="LastView" Type="System.Byte" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="DefaultScannerId" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ScannerDPI" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">200</Value>
+    </Setting>
+    <Setting Name="ScannerColorFormat" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">3</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

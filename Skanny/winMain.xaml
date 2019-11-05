@@ -294,8 +294,16 @@
               <ContentPresenter Content="{Binding}">
                 <ContentPresenter.ContentTemplate>
                   <DataTemplate>
-                    <Grid>
+                    <Grid MouseEnter="thumbMouseEnter" MouseLeave="thumbMouseLeave" MouseMove="thumbMouseMove" GotFocus="thumbGotFocus" >
+                      <Grid.ContextMenu>
+                        <ContextMenu>
+                          <MenuItem Header="Open" Click="fileOpen" />
+                          <Separator />
+                          <MenuItem Header="Delete" Click="fileDelete" />
+                        </ContextMenu>
+                      </Grid.ContextMenu>
                       <Image Source="{Binding Image}" Width="{Binding Width}"/>
+
                       <!--<TextBlock Text="{Binding FileSpec}" Foreground="Black"/>-->
                       <!--<TextBlock Text="{Binding ToPdf}" Foreground="Black"/>-->
                       <Grid Name="overlay" Background="#7F000000" Visibility="{Binding ToPdf, Converter={StaticResource VisibleIfTrueConverter}}" MouseUp="Overlay_MouseUp" Focusable="True" KeyUp="Overlay_KeyUp">
@@ -423,25 +431,25 @@
           <ItemsPanelTemplate>
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="80" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="150" />
               </Grid.ColumnDefinitions>
             </Grid>
           </ItemsPanelTemplate>
         </StatusBar.ItemsPanel>
         <StatusBarItem>
-          <!--<TextBlock Name="lblCursorPosition" />-->
+          <Label x:Name="lblStatus" Content=""/>
         </StatusBarItem>
         <Separator Grid.Column="1" />
-        <StatusBarItem Grid.Column="2">
-          <!--<TextBlock Text="c:\path\of\current\file.txt" />-->
+        <StatusBarItem Grid.Column="2" HorizontalContentAlignment="Right">
+          <Label x:Name="lblSize" Content=""/>
         </StatusBarItem>
         <Separator Grid.Column="3" />
-        <StatusBarItem Grid.Column="4">
-          <!--<ProgressBar Value="50" Width="90" Height="16" />-->
+        <StatusBarItem Grid.Column="4" HorizontalContentAlignment="Right">
+          <Label x:Name="lblMod" Content="" />
         </StatusBarItem>
       </StatusBar>
     </Border>
@@ -465,7 +473,7 @@
                   <Label Content="Scan" HorizontalAlignment="Center" Padding="0" FontSize="20"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="btnReload" Margin="0" Padding="0,2,0,2" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
+              <Button x:Name="btnReload" Margin="0" Padding="0,2,0,2" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnReload_Click" >
                 <StackPanel>
                   <Image Source="include/recycle.png" Height="32" Width="32">
                   </Image>

@@ -86,7 +86,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="clsStatic.cs" />
+    <Compile Include="clsShared.cs" />
+    <Compile Include="WiaScanner.cs" />
     <Compile Include="winMain.xaml.cs">
       <DependentUpon>winMain.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -157,6 +158,17 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="R3P\" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="WIA">
+      <Guid>{94A0E92D-43C0-494E-AC29-FD45948A5221}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

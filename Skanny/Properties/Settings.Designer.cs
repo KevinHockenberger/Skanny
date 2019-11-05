@@ -94,5 +94,65 @@ namespace Skanny.Properties {
                 this["PicDirectory"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\\\Skanny\\Scans")]
+        public string ScanDirectory {
+            get {
+                return ((string)(this["ScanDirectory"]));
+            }
+            set {
+                this["ScanDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public byte LastView {
+            get {
+                return ((byte)(this["LastView"]));
+            }
+            set {
+                this["LastView"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DefaultScannerId {
+            get {
+                return ((string)(this["DefaultScannerId"]));
+            }
+            set {
+                this["DefaultScannerId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("200")]
+        public int ScannerDPI {
+            get {
+                return ((int)(this["ScannerDPI"]));
+            }
+            set {
+                this["ScannerDPI"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public int ScannerColorFormat {
+            get {
+                return ((int)(this["ScannerColorFormat"]));
+            }
+            set {
+                this["ScannerColorFormat"] = value;
+            }
+        }
     }
 }

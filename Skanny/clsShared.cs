@@ -65,21 +65,7 @@ namespace Skanny
     }
   }
 
-    [TypeConverter(typeof(EnumDescriptionTypeConverter))]
-    public enum AvailableThumbSizes
-    {
-      [Description("X-Small")]
-      Xsmall = 50,
-      [Description("Small")]
-      Small = 100,
-      [Description("Medium")]
-      Medium = 250,
-      [Description("Large")]
-      Large = 500,
-      [Description("X-Large")]
-      Xlarge = 1000,
-    }
-  static class clsStatic
+  static class clsShared
   {
 
   }

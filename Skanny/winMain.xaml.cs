@@ -1,6 +1,12 @@
-﻿using System;
+﻿using Ghostscript.NET;
+using Ghostscript.NET.Rasterizer;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -11,6 +17,31 @@ using System.Windows.Media.Imaging;
 
 namespace Skanny
 {
+
+  [TypeConverter(typeof(EnumDescriptionTypeConverter))]
+  public enum AvailableThumbSizes
+  {
+    [Description("X-Small")]
+    Xsmall = 100,
+    [Description("Small")]
+    Small = 250,
+    [Description("Medium")]
+    Medium = 500,
+    [Description("Large")]
+    Large = 800,
+    [Description("X-Large")]
+    Xlarge = 1000,
+  }
+  public enum ColorFormats
+  {
+    [Description("Black and White")]
+    BlackandWhiteOnly = 1,
+    [Description("Gray Scale")]
+    GrayScale = 2,
+    [Description("Color")]
+    Color = 3,
+  }
+
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
@@ -30,20 +61,24 @@ namespace Skanny
       public Thumb() { }
       private string _filespec;
       public string FileSpec { get { return _filespec; } set { if (value != _filespec) { _filespec = value; NotifyPropertyChanged("FileSpec"); } } }
+      public DateTime Created { get; set; }
       private int? _index;
       public int? Index { get { return _index; } set { if (value != _index) { _index = value; NotifyPropertyChanged("Index"); } } }
+      public long Length { get; set; }
       private bool _toPdf;
       public bool ToPdf { get { return _toPdf; } set { if (value != _toPdf) { _toPdf = value; NotifyPropertyChanged("ToPdf"); } } }
       private double _width;
       public double Width { get { return _width; } set { if (value != _width) { _width = value; NotifyPropertyChanged("Width"); } } }
       private double _fontsize;
       public double FontSize { get { return _fontsize; } set { if (value != _fontsize) { _fontsize = value; NotifyPropertyChanged("FontSize"); } } }
+      public ContextMenu ContextMenu;
       public ImageSource Image { get; set; }
     }
     public AvailableThumbSizes ThumbSize { get; set; }
     public ObservableCollection<Thumb> scans { get; set; } = new ObservableCollection<Thumb>();
     public ObservableCollection<Thumb> pics { get; set; } = new ObservableCollection<Thumb>();
     FileSystemWatcher watcher = new FileSystemWatcher();
+    public static readonly string defaultScanDirectory = @"C:\\Skanny\Scans";
 
     private void Window_Initialized(object sender, EventArgs e)
     {
@@ -51,17 +86,7 @@ namespace Skanny
       ClearStatus();
       ApplySettings();
 
-      scans.Add(new Thumb() { FileSpec = "C:\\test.png", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/camera.png", UriKind.Absolute)) });
-      scans.Add(new Thumb() { FileSpec = "C:\\123.bmp", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/scanner.png", UriKind.Absolute)) });
-      scans.Add(new Thumb() { FileSpec = "C:\\test.png", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/camera.png", UriKind.Absolute)) });
-      scans.Add(new Thumb() { FileSpec = "C:\\123.bmp", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/scanner.png", UriKind.Absolute)) });
-      scans.Add(new Thumb() { FileSpec = "C:\\test.png", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/camera.png", UriKind.Absolute)) });
-      scans.Add(new Thumb() { FileSpec = "C:\\123.bmp", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/scanner.png", UriKind.Absolute)) });
-      pics.Add(new Thumb() { FileSpec = "C:\\test.png", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/camera.png", UriKind.Absolute)) });
-      pics.Add(new Thumb() { FileSpec = "C:\\123.bmp", Width = 150, Image = new BitmapImage(new Uri(@"pack://application:,,,/include/scanner.png", UriKind.Absolute)) });
-      ResizeThumbs();
-      listScans.ItemsSource = scans;
-      listPics.ItemsSource = pics;
+      LoadImages();
       RadioButton_Checked(null, null);
     }
     private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -87,7 +112,10 @@ namespace Skanny
       this.Left = Properties.Settings.Default.LastWindowRect.Left;
       gridMain.ColumnDefinitions[0].Width = new GridLength(Properties.Settings.Default.SidebarWidth);
       cmbSize.SelectedItem = (AvailableThumbSizes)Properties.Settings.Default.LastThumbSize;
-
+      if (Properties.Settings.Default.LastView != 0)
+      {
+        rdoPics.IsChecked = true;
+      }
     }
     private void SaveSettings()
     {
@@ -95,6 +123,7 @@ namespace Skanny
       Properties.Settings.Default.LastWindowRect = this.RestoreBounds;
       Properties.Settings.Default.SidebarWidth = gridMain.ColumnDefinitions[0].Width.Value;
       Properties.Settings.Default.LastThumbSize = (int)(AvailableThumbSizes)(cmbSize.SelectedItem ?? AvailableThumbSizes.Medium);
+      Properties.Settings.Default.LastView = rdoPics.IsChecked == true ? (byte)1 : (byte)0; 
       Properties.Settings.Default.Save();
     }
     private void UpdateStatus(string message, System.Windows.Media.Brush background, System.Windows.Media.Brush foreground)
@@ -154,10 +183,174 @@ namespace Skanny
         this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
       }
     }
-    private void btnScan_Click(object sender, RoutedEventArgs e)
+    private void OpenSettings()
     {
 
     }
+    private bool StartScan(out List<System.Drawing.Image> images)
+    {
+      bool ret = false;
+      images = new List<System.Drawing.Image>();
+      string defaultScanner = Properties.Settings.Default.DefaultScannerId;
+      Dictionary<string, string> devices = WiaScanner.GetDevices();
+      if (!devices.Values.Contains(defaultScanner))
+      {
+        MessageBoxResult result = MessageBox.Show("The default scanner was not detected. Would you like to change the default scanner?", "Default Scanner Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (result == MessageBoxResult.Yes)
+        {
+          OpenSettings();
+        }
+      }
+      else
+      {
+        try
+        {
+          images = WiaScanner.Scan(defaultScanner);
+          bool scanComplete = false;
+          while (!scanComplete)
+          {
+            MessageBoxResult result = MessageBox.Show(string.Format("Scan more?", images.Count), "Scan Complete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+              try
+              {
+                images.AddRange(WiaScanner.Scan(defaultScanner));
+              }
+              catch (Exception ex)
+              {
+                if (images.Any())
+                {
+                  result = MessageBox.Show(string.Format("{0}\nAttempt to scan again? If yes, insert next page before confirming.", ex.Message), "Scan Error", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                  if (result == MessageBoxResult.Yes)
+                  {
+                    images.AddRange(WiaScanner.Scan(defaultScanner));
+                  }
+                  else
+                  {
+                    return false;
+                  }
+                }
+                else
+                {
+                  throw ex;
+                }
+              }
+            }
+            else if (result == MessageBoxResult.No)
+            {
+              scanComplete = true;
+            }
+          }
+          ret = true;
+        }
+        catch (Exception ex)
+        {
+          MessageBox.Show(ex.Message, "Scan Error", MessageBoxButton.OK, MessageBoxImage.Error);
+          return false;
+        }
+      }
+      return ret;
+    }
+    private void btnScan_Click(object sender, RoutedEventArgs e)
+    {
+      if (validateScanDir())
+      {
+        //if (MessageBox.Show("Place document(s) in the scanner and click ok when ready.", "Prepare Scanner", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+        //{
+        try
+        {
+          if (StartScan(out List<System.Drawing.Image> images))
+          {
+            if (images != null && images.Any())
+            {
+              var now = DateTime.Now.Ticks;
+              var fileName = "";
+              if (images.Count == 1)
+              {
+                fileName = string.Format(@"{0}\skannyscan_{1}.jpg", Properties.Settings.Default.ScanDirectory, now);
+                using (MemoryStream memory = new MemoryStream())
+                {
+                  using (FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.ReadWrite))
+                  {
+                    images.First().Save(memory, System.Drawing.Imaging.ImageFormat.Jpeg); //save the image to memory stream as Jpeg for compression 
+                    byte[] bytes = memory.ToArray();
+                    fs.Write(bytes, 0, bytes.Length);
+                  }
+                }
+              }
+              else if (images.Count > 1)
+              {
+                PdfDocument pdfDoc = new PdfDocument();
+                pdfDoc.Info.Title = "Scan";
+                pdfDoc.Info.Author = "Skanny";
+                pdfDoc.Info.Subject = pdfDoc.Info.Title;
+
+                foreach (var image in images)
+                {
+                  // Create an empty page	
+                  PdfPage page = pdfDoc.AddPage();
+                  // Get an XGraphics object for drawing
+                  XGraphics gfx = XGraphics.FromPdfPage(page);
+                  // add the scanned image
+                  AddImage(gfx, page, image, 0, 0);
+                }
+                fileName = string.Format(@"{0}\skannyscan_{1}.pdf", Properties.Settings.Default.ScanDirectory, now);
+                pdfDoc.Save(fileName);
+              }
+              File.SetAttributes(fileName, FileAttributes.ReadOnly);
+              //Thumbs.CleanScanDirectory(Skanny.Properties.Settings.Default.ScanDirectory, Skanny.Properties.Settings.Default.ScanCount == 0 ? 1 : Skanny.Properties.Settings.Default.ScanCount);
+              //getScannedThumbnails();
+              //if (rdoPreviewScan.IsChecked != true)
+              //{
+              //  rdoPreviewScan.IsChecked = true; // fires rdoPreviewScan_Checked event                  
+              //}
+              //else
+              //{
+              //  setScanView();
+              //}
+              //loadScanThumbnails((string)cmbThumbSize.SelectedValue);
+            }
+            else
+            {
+              MessageBox.Show("No images were acquired in the scan process.");
+            }
+          }
+          else
+          {
+            MessageBox.Show("Scanning of documents could not be completed.");
+          }
+        }
+        catch (Exception ex)
+        {
+          MessageBox.Show(ex.Message);
+        }
+        //}
+      }
+    }
+    private static void AddImage(XGraphics gfx, PdfPage page, System.Drawing.Image image, double xPosition, double yPosition, double? Width = null, double? Height = null)
+    {
+      try
+      {
+        using (MemoryStream stream = new MemoryStream())
+        {
+          image.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg); //save the image to memory stream as Jpeg for compression
+          XImage xImg = XImage.FromStream(stream); //use XImage.FromStream DO NOT USE Image.FromStream!! PDF Document will be corrupted
+          if (Width.HasValue && Height.HasValue)
+          {
+            gfx.DrawImage(xImg, xPosition, yPosition, Width.Value, Height.Value);
+          }
+          else
+          {
+            gfx.DrawImage(xImg, xPosition, yPosition);
+          }
+        }
+      }
+      catch (Exception)
+      {
+        // Handle exception
+      }
+    }
+
     private void BtnPdf_Click(object sender, RoutedEventArgs e)
     {
       foreach (var x in scans)
@@ -267,6 +460,16 @@ namespace Skanny
     {
       Dispatcher.Invoke(() => { UpdatePics(); });
     }
+    private bool validateScanDir()
+    {
+      if (string.IsNullOrWhiteSpace(Properties.Settings.Default.ScanDirectory) || !Directory.Exists(Properties.Settings.Default.ScanDirectory))
+      {
+        MessageBox.Show("Scan folder is not set or does not exist. Assigning the default location.");
+        Properties.Settings.Default.ScanDirectory = defaultScanDirectory;
+        return false;
+      }
+      return true;
+    }
     private void UpdatePics()
     {
       //watcher.EnableRaisingEvents = false; // temporarily disable file system watcher
@@ -280,13 +483,254 @@ namespace Skanny
       {
         SetViewPics();
       }
+      ResizeThumbs();
+    }
+    private void LoadImages()
+    {
+      LoadImagesForScans();
+      LoadImagesForPics();
+      ResizeThumbs();
     }
     private void LoadImagesForScans()
     {
+      scans.Clear();
+      var t = GetThumbnails(Properties.Settings.Default.ScanDirectory);
+      if (t == null)
+      {
+        Properties.Settings.Default.ScanDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        t = GetThumbnails(Properties.Settings.Default.ScanDirectory);
+      }
+      if (t != null)
+      {
+        scans = new ObservableCollection<Thumb>(t);
+      }
+      listScans.ItemsSource = scans;
     }
     private void LoadImagesForPics()
     {
+      pics.Clear();
+      var t = GetThumbnails(Properties.Settings.Default.PicDirectory);
+      if (t == null)
+      {
+        Properties.Settings.Default.PicDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        t = GetThumbnails(Properties.Settings.Default.PicDirectory);
+      }
+      if (t != null)
+      {
+        pics = new ObservableCollection<Thumb>(t);
+      }
+      listPics.ItemsSource = pics;
+    }
+    public List<Thumb> GetThumbnails(string directory)
+    {
+      if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+      {
+        return null;
+      }
+      List<Thumb> thumbList = new List<Thumb>();
+      DirectoryInfo dir = new DirectoryInfo(directory);
+      try
+      {
+        foreach (var file in dir.EnumerateFiles().OrderByDescending(x => x.CreationTime))
+        {
+          bool fileLocked = true;
+          var ext = Path.GetExtension(file.FullName).ToLower();
+          switch (ext)
+          {
+            case ".pdf":
+            case ".bmp":
+            case ".gif":
+            case ".jpg":
+            case ".png":
+            case ".tiff":
+              for (int tries = 0; tries < 3; tries++)
+              {
+                try
+                {
+                  // remove read-only attribute of file
+                  File.SetAttributes(file.FullName, FileAttributes.Normal);
+                  // Attempts to open then close the file in RW mode, denying other users to place any locks.
+                  using (FileStream fs = File.Open(file.FullName, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                  {
+                    if (fs.Length > 0)
+                    {
+                      fileLocked = false;
+                    }
+                  }
+                  if (!fileLocked)
+                  {
+                    break;
+                  }
+                }
+                catch (IOException)
+                {
+                  try
+                  {
+                    File.SetAttributes(file.FullName, FileAttributes.ReadOnly);
+                  }
+                  catch (Exception)
+                  {
+                  }
+                  System.Threading.Thread.Sleep(100);
+                }
+              }
+              if (!fileLocked)
+              {
+                var t = new Thumb() { Created = file.CreationTime, FileSpec = file.FullName, Length = file.Length };
+                thumbList.Add(t);
+                int width = (int)(AvailableThumbSizes)cmbSize.SelectedItem;
+                if (ext == ".pdf")
+                {
+                  t.Image = GetPDFThumbnail(t.FileSpec);
+                }
+                else
+                {
+                  Uri src = new Uri(t.FileSpec, UriKind.RelativeOrAbsolute);
+                  var bmp = new BitmapImage();
+                  bmp.BeginInit();
+                  bmp.CacheOption = BitmapCacheOption.OnLoad;
+                  bmp.UriSource = src;
+                  bmp.DecodePixelWidth = (width <= 200 ? 500 : (int)width);
+                  bmp.EndInit();
+                  t.Image = bmp;
+                }
+                // turn on readonly attribute of file
+                File.SetAttributes(file.FullName, FileAttributes.ReadOnly);
+              }
+              break;
+          }
+        }
+      }
+      catch (Exception)
+      {
+      }
+      return thumbList;
+    }
+    public BitmapImage GetPDFThumbnail(string filePath)
+    {
+      BitmapImage ret = new BitmapImage();
+      int desired_x_dpi = 96;
+      int desired_y_dpi = 96;
 
+      GhostscriptVersionInfo gvi = GhostscriptVersionInfo.GetLastInstalledVersion(GhostscriptLicense.GPL | GhostscriptLicense.AFPL, GhostscriptLicense.GPL);
+      try
+      {
+        //File.SetAttributes(filePath, FileAttributes.Normal);
+        using (GhostscriptRasterizer rasterizer = new GhostscriptRasterizer())
+        {
+          rasterizer.Open(filePath, gvi, false);
+          System.Drawing.Image tempImage = rasterizer.GetPage(desired_x_dpi, desired_y_dpi, 1);
+          if (tempImage != null) // have to convert system.drawing.image to wpf image
+          {
+            using (System.IO.MemoryStream memory = new System.IO.MemoryStream())
+            {
+              tempImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+              //memory.Position = 0;
+              ret.BeginInit();
+              ret.StreamSource = memory;
+              ret.CacheOption = BitmapCacheOption.OnLoad;
+              ret.EndInit();
+            }
+          }
+        }
+        //File.SetAttributes(filePath, FileAttributes.ReadOnly);
+      }
+      catch (Exception)
+      {
+        throw;
+      }
+      return ret;
+    }
+    private void thumbMouseMove(object sender, MouseEventArgs e)
+    {
+      if (sender is Grid g && g.DataContext is Thumb t && e.LeftButton == MouseButtonState.Pressed)
+      {
+        var obj = new DataObject();
+        System.Collections.Specialized.StringCollection files = new System.Collections.Specialized.StringCollection();
+        files.Add(t.FileSpec);
+        obj.SetFileDropList(files);
+        var dd = DragDrop.DoDragDrop(new ContentElement(), obj, DragDropEffects.Copy);
+      }
+    }
+    private void thumbMouseEnter(object sender, MouseEventArgs e)
+    {
+      if (sender is Grid g && g.DataContext is Thumb t)
+      {
+        lblStatus.Content = string.Format("{0}", t.FileSpec);
+        lblSize.Content = string.Format("{0:N2} MB", (t.Length / 1024f) / 1024f);
+        lblMod.Content = string.Format("{0}", t.Created);
+      }
+    }
+    private void thumbMouseLeave(object sender, MouseEventArgs e)
+    {
+      lblStatus.Content = null;
+      lblSize.Content = null;
+      lblMod.Content = null;
+    }
+    private void fileOpen(object sender, RoutedEventArgs e)
+    {
+      try
+      {
+        if (sender is MenuItem m && m.DataContext is Thumb t)
+        {
+          if (File.Exists(t.FileSpec))
+          {
+            Process process = new Process
+            {
+              StartInfo = new ProcessStartInfo
+              {
+                FileName = t.FileSpec
+              }
+            };
+            process.Start();
+          }
+          else
+          {
+            MessageBox.Show("File does not exist!");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
+    }
+    private void fileDelete(object sender, RoutedEventArgs e)
+    {
+      try
+      {
+        if (sender is MenuItem m && m.DataContext is Thumb t)
+        {
+          if (File.Exists(t.FileSpec))
+          {
+            try
+            {
+              File.SetAttributes(t.FileSpec, FileAttributes.Normal);
+              File.Delete(t.FileSpec);
+              LoadImages();
+            }
+            catch (Exception ex)
+            {
+              MessageBox.Show(ex.Message);
+            }
+          }
+          else
+          {
+            MessageBox.Show("File does not exist!");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
+    }
+    private void thumbGotFocus(object sender, RoutedEventArgs e)
+    {
+    }
+    private void BtnReload_Click(object sender, RoutedEventArgs e)
+    {
+      LoadImages();
     }
   }
 }
