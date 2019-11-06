@@ -495,7 +495,7 @@
                   <Label Content="Settings" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="btnClean" Padding="0,2,0,2" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
+              <Button x:Name="btnClean" Padding="0,2,0,2" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnClean_Click" >
                 <StackPanel>
                   <Image Source="include/trash.png" Height="32" Width="32">
                   </Image>

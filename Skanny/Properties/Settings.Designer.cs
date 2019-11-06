@@ -154,5 +154,17 @@ namespace Skanny.Properties {
                 this["ScannerColorFormat"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int FilesToKeep {
+            get {
+                return ((int)(this["FilesToKeep"]));
+            }
+            set {
+                this["FilesToKeep"] = value;
+            }
+        }
     }
 }

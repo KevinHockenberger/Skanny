@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Skanny"
         mc:Ignorable="d"
-        Title="Settings" Height="455" MinHeight="450" MinWidth="420" Width="500" WindowStartupLocation="CenterOwner" Icon="include/settings.png">
+        Title="Settings" Height="536" MinHeight="450" MinWidth="420" Width="500" WindowStartupLocation="CenterOwner" Icon="include/settings.png">
   <Window.Resources>
     <Style TargetType="{x:Type local:winSettings}">
       <Setter Property="FontFamily" Value="Arial" />
@@ -50,29 +50,26 @@
           <RowDefinition Height="40"/>
           <RowDefinition Height="10"/>
           <RowDefinition Height="40"/>
+          <RowDefinition Height="Auto"/>
           <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
         <Separator Grid.Row="1" Grid.ColumnSpan="3"/>
         <Label Content="Picture Folder:" VerticalAlignment="Center" HorizontalAlignment="Right"/>
         <TextBox x:Name="txtPicDirectory" Grid.Column="1" VerticalAlignment="Center" />
-        <Button x:Name="btnBrowse" Content="..." Grid.Column="2" Width="32"  BorderThickness="1" BorderBrush="LightGray" Margin="2" VerticalAlignment="Center"/>
+        <Button x:Name="btnBrowse" Content="..." Grid.Column="2" Width="32"  BorderThickness="1" BorderBrush="LightGray" Margin="2" VerticalAlignment="Center" Click="BtnBrowse_Click"/>
         <Label Content="Scan Folder:" Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-        <ComboBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" Grid.ColumnSpan="2"></ComboBox>
-        <StackPanel Grid.ColumnSpan="3" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-          <!--<Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition/>
-          </Grid.ColumnDefinitions>-->
+        <TextBox x:Name="txtScanDirectory" Grid.Column="1" VerticalAlignment="Center" Grid.Row="2" />
+        <Button x:Name="btnBrowseScan" Content="..." Grid.Column="2" Grid.Row="2" Width="32"  BorderThickness="1" BorderBrush="LightGray" Margin="2" VerticalAlignment="Center" Click="BtnBrowseScan_Click"/>
+        <Label x:Name="lblWarning" Grid.Row="3" Grid.ColumnSpan="3" FontSize="14" Padding="0,0,0,5" HorizontalAlignment="Center" >
+          <StackPanel>
+            <Label Content="*** WARNING ***" Foreground="Red" Padding="5,2" HorizontalAlignment="Center"/>
+            <TextBlock Text="Files in the scan folder will be automatically removed. Only use a folder dedicated to Skanny so important files will not be lost." Background="Red" Foreground="White" Padding="5,2" TextWrapping="Wrap"/>
+            <!--<Label Content="***" Foreground="Red" Padding="5,2"/>-->
+          </StackPanel>
+        </Label>
+        <StackPanel Grid.ColumnSpan="3" Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
           <Label Content="Keep" VerticalAlignment="Center"/>
-          <ComboBox VerticalAlignment="Center" Width="50">
-            <ComboBoxItem Content="0" />
-            <ComboBoxItem Content="1" />
-            <ComboBoxItem Content="5" />
-            <ComboBoxItem Content="10" />
-            <ComboBoxItem Content="15" />
-            <ComboBoxItem Content="20" />
-            <ComboBoxItem Content="30" />
+          <ComboBox x:Name="cmbRecentToKeep" VerticalAlignment="Center" Width="50" ItemsSource="{Binding AvailableNumberOfFilesToKeep}">
           </ComboBox>
           <Label Content="most recent files" VerticalAlignment="Center"/>
           <Button x:Name="btnClean" BorderBrush="#FF8D8D8D" BorderThickness="1" Click="BtnClean_Click" Margin="15,0,0,0" >
@@ -87,64 +84,55 @@
       <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFAAAAAA" Margin="0,15,0,0">
         <Grid>
           <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="225"/>
+            <ColumnDefinition Width="275"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition />
           </Grid.ColumnDefinitions>
-
-          <!--<Grid Margin="2,4,2,2">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="30"/>
-              <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Label Content="Default Device:" Padding="2"/>
-            <Label x:Name="lblDefaultDevice" Grid.Row="1" Content="..." Padding="2"/>
-            <Label Content="Scan Resolution:" Grid.Row="2"/>
-          </Grid>-->
-          <StackPanel Margin="2,4,2,2" VerticalAlignment="Top">
-            <Label Content="Default Device:" Padding="2"/>
-            <Label x:Name="lblDefaultDevice"  Content="..." Padding="2"/>
-            <StackPanel Orientation="Horizontal" Margin="0,5">
-              <Label Content="Scan Resolution:" />
-              <ComboBox Width="50">
-                <ComboBoxItem Content="100" />
-                <ComboBoxItem Content="150" />
-                <ComboBoxItem Content="200" />
-                <ComboBoxItem Content="300" />
-                <ComboBoxItem Content="400" />
-                <ComboBoxItem Content="500" />
-                <ComboBoxItem Content="600" />
-              </ComboBox>
-              <Label Content="DPI" />
-            </StackPanel>
-            <StackPanel Margin="10" >
-              <RadioButton Foreground="White" Content="Black and White" VerticalContentAlignment="Center"/>
-              <RadioButton Foreground="White" Content="Gray Scale" VerticalContentAlignment="Center"/>
-              <RadioButton Foreground="White" Content="Color" VerticalContentAlignment="Center"/>
-            </StackPanel>
-          </StackPanel>
-          <TextBlock TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Text="Some settings may not be available on certain scanners." FontSize="12" VerticalAlignment="Bottom" Margin="5,0,5,5"/>
-          <Border Grid.Column="1" BorderThickness="1" BorderBrush="#FFAAAAAA" Margin="-1">
+          <GridSplitter Grid.Column="1" Width="4" Background="#FF727272" ResizeBehavior="PreviousAndNext"/>
+          <ScrollViewer VerticalScrollBarVisibility="Auto" >
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+              <StackPanel Margin="2,4,2,2" VerticalAlignment="Top">
+                <Label Content="Default Device:" Padding="2" FontSize="14"/>
+                <Label x:Name="lblDefaultDevice"  Content="..." Padding="2"/>
+                <WrapPanel Orientation="Horizontal" Margin="0,5">
+                  <Label Content="Scan Resolution:" />
+                  <ComboBox x:Name="cmbDpi" Width="60" ItemsSource="{Binding AvailableDpi}"/>
+                  <Label Content="DPI" />
+                </WrapPanel>
+                <StackPanel Margin="10" >
+                  <RadioButton x:Name="rdoBlack" Foreground="White" Content="Black and White" VerticalContentAlignment="Center"/>
+                  <RadioButton x:Name="rdoGray" Foreground="White" Content="Grayscale" VerticalContentAlignment="Center"/>
+                  <RadioButton x:Name="rdoColor" Foreground="White" Content="Color" VerticalContentAlignment="Center"/>
+                </StackPanel>
+              </StackPanel>
+              <TextBlock Grid.Row="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Text="Some settings may not be available on certain scanners." FontSize="12" VerticalAlignment="Bottom" Margin="5,0,5,5"/>
+            </Grid>
+          </ScrollViewer>
+          <Border Grid.Column="2" BorderThickness="1" BorderBrush="#FFAAAAAA" Margin="-1">
             <Grid Margin="2">
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition/>
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
-              <Label Content="Available devices:" VerticalAlignment="Top" Padding="2" Margin="0,2,0,0"/>
-              <ListBox Grid.Row="1"  x:Name="listScanners" Margin="0" />
+              <Label x:Name="lblAvailDevices" Content="Available devices:" VerticalAlignment="Top" Padding="2" Margin="0,2,0,0" FontSize="14"/>
+              <ListBox Grid.Row="1"  x:Name="listDevices" Margin="0" />
               <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition/>
                   <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <Button BorderThickness="1">
+                <Button x:Name="btnDefaultDevice" BorderThickness="1" Click="BtnDefaultDevice_Click">
                   <StackPanel Orientation="Horizontal" >
                     <Image Source="include\check.png" Height="24" Width="30"/>
                     <TextBlock Text="Default" Margin="5,0" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
-                <Button Grid.Column="1" BorderThickness="1">
+                <Button x:Name="btnRefreshDevices" Grid.Column="1" BorderThickness="1" Click="BtnRefreshDevices_Click">
                   <StackPanel Orientation="Horizontal" >
                     <Image Source="include\recycle.png" Height="24" Width="30"/>
                     <TextBlock Text="Refresh" Margin="5,0" VerticalAlignment="Center" />

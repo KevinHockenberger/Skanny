@@ -226,7 +226,7 @@ namespace Skanny
           {
           }
           break;
-        case (int)ColorFormats.GrayScale:
+        case (int)ColorFormats.Grayscale:
           try
           {
             item.Properties["6146"].set_Value(2); //grayscale
