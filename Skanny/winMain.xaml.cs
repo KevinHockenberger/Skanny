@@ -2,6 +2,7 @@
 using Ghostscript.NET.Rasterizer;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -80,6 +81,7 @@ namespace Skanny
     public ObservableCollection<Thumb> pics { get; set; } = new ObservableCollection<Thumb>();
     FileSystemWatcher watcher = new FileSystemWatcher();
     public static readonly string defaultScanDirectory = @"C:\Skanny\Scans";
+    System.Threading.Timer clrHeader;
 
     private void Window_Initialized(object sender, EventArgs e)
     {
@@ -127,15 +129,27 @@ namespace Skanny
       settings.Default.LastView = rdoPics.IsChecked == true ? (byte)1 : (byte)0;
       settings.Default.Save();
     }
-    private void UpdateStatus(string message, System.Windows.Media.Brush background, System.Windows.Media.Brush foreground)
+    private void UpdateStatus(object o)
     {
-      if (string.IsNullOrEmpty(message)) { return; }
+      UpdateStatus((o ?? string.Empty).ToString(), new SolidColorBrush(Colors.Transparent), new SolidColorBrush(Colors.White));
+    }
+    private void UpdateStatus(string message, Brush background, Brush foreground)
+    {
+      if (string.IsNullOrEmpty(message)) { ClearStatus(); return; }
       Dispatcher.Invoke(() =>
       {
         txtStatus.Text = message;
         txtStatus.Background = background ?? txtStatus.Background;
         txtStatus.Foreground = foreground ?? txtStatus.Foreground;
       });
+      if (clrHeader == null)
+      {
+        clrHeader = new System.Threading.Timer(new System.Threading.TimerCallback(UpdateStatus), null, 30000, System.Threading.Timeout.Infinite);
+      }
+      else
+      {
+        clrHeader.Change(30000, System.Threading.Timeout.Infinite);
+      }
     }
     private void ClearStatus()
     {
@@ -214,7 +228,7 @@ namespace Skanny
         if (settings.Default.FilesToKeep != w.KeepRecent)
         {
           settings.Default.FilesToKeep = w.KeepRecent;
-          CleanScanDirectory();
+          System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
         }
         SaveSettings();
       }
@@ -327,14 +341,10 @@ namespace Skanny
                 fileName = string.Format(@"{0}\skannyscan_{1}.pdf", settings.Default.ScanDirectory, now);
                 pdfDoc.Save(fileName);
               }
-              Thumb t = GetThumbnail(new FileInfo(fileName));
-              if (t != null)
-              {
-                scans.Insert(0, t);
-              }
               File.SetAttributes(fileName, FileAttributes.ReadOnly);
+              GetAndInsertThumbFromFilename(fileName);
               SetViewScans();
-              CleanScanDirectory();
+              System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
             }
             else
             {
@@ -377,13 +387,49 @@ namespace Skanny
     }
     private void BtnPdf_Click(object sender, RoutedEventArgs e)
     {
-      foreach (var x in scans)
+      var t = scans.Concat(pics).Where(p => p.ToPdf == true);
+      if (t.Any())
       {
-        x.ToPdf = !x.ToPdf;
+        var n = t.Where(p => p.Index != null).OrderBy(p => p.Index);
+        if (n.Any() && n.Count()>1)
+        {
+          if (MessageBox.Show(string.Format("Create a {0} page PDF document from selected files?", n.Count()), "New document", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+          {
+            // create the new pdf
+            UpdateStatus("Creating new PDF. Please wait...");
+            JoinDocuments(n);
+          }
+          else
+          {
+            UpdateStatus("New PDF aborted.");
+          }
+        }
+        else
+        {
+          ClearStatus();
+        }
+        foreach (var x in scans)
+        {
+          x.ToPdf = false; x.Index = null;
+        }
+        foreach (var x in pics)
+        {
+          x.ToPdf = false; x.Index = null;
+        }
+
       }
-      foreach (var x in pics)
+      else
       {
-        x.ToPdf = !x.ToPdf;
+        UpdateStatus("Select the files to combine to PDF in the order that they should appear. Click [Join] again to complete/cancel.");
+        foreach (var x in scans)
+        {
+          x.ToPdf = true; x.Index = null;
+        }
+        foreach (var x in pics)
+        {
+          x.ToPdf = true; x.Index = null;
+        }
+
       }
     }
     private void cmbSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -784,120 +830,207 @@ namespace Skanny
     {
       CleanScanDirectory();
     }
-    public void CleanScanDirectory()
+    public void CleanScanDirectory(bool silent = false)
     {
-      if (!validateScanDir()) { return; }
+      if (!validateScanDir())
+      {
+        UpdateStatus("Cannot clean folder. Folder not set or does not exist.", null, new SolidColorBrush(Colors.Red));
+        return;
+      }
       DirectoryInfo dir = new DirectoryInfo(settings.Default.ScanDirectory);
-      try
-      {
-        if (settings.Default.FilesToKeep == 0)
+      int numFiles = 0;
+      Dispatcher.Invoke(()=> {
+        try
         {
-          foreach (var file in dir.EnumerateFiles())
+          if (settings.Default.FilesToKeep == 0)
           {
-            bool fileLocked = true;
-            for (int i = 0; i < 3; i++)
+            foreach (var file in dir.EnumerateFiles())
             {
-              try
-              {
-                // remove readonly attribute before deleting
-                File.SetAttributes(file.FullName, FileAttributes.Normal);
-                // Attempts to open then close the file in RW mode, denying other users to place any locks.
-                using (FileStream fs = File.Open(file.FullName, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-                {
-                  if (fs.Length > 0)
-                  {
-                    fileLocked = false;
-                  }
-                }
-                if (!fileLocked)
-                {
-                  break;
-                }
-              }
-              catch (IOException)
+              bool fileLocked = true;
+              for (int i = 0; i < 3; i++)
               {
                 try
                 {
-                  File.SetAttributes(file.FullName, FileAttributes.ReadOnly);
-                }
-                catch (Exception)
-                {
-                }
-                System.Threading.Thread.Sleep(50);
-              }
-            }
-            if (!fileLocked)
-            {
-              GC.Collect();
-              GC.WaitForPendingFinalizers();
-              file.Delete();
-              var t = scans.Where(p => p.FileSpec == file.FullName);
-              if (t.Any())
-              { scans.Remove(t.First()); }
-            }
-            else
-            {
-              //throw new Exception(string.Format("{0} could not be deleted.", file.FullName));
-            }
-          }
-        }
-        else
-        {
-          foreach (var file in dir.EnumerateFiles().OrderByDescending(x => x.CreationTime).Skip(settings.Default.FilesToKeep))
-          {
-            bool fileLocked = true;
-            for (int i = 0; i < 3; i++)
-            {
-              try
-              {
-                // remove read-only attribute
-                File.SetAttributes(file.FullName, FileAttributes.Normal);
-                // Attempts to open then close the file in RW mode, denying other users to place any locks.
-                using (FileStream fs = File.Open(file.FullName, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-                {
-                  if (fs.Length > 0)
+                  // remove readonly attribute before deleting
+                  File.SetAttributes(file.FullName, FileAttributes.Normal);
+                  // Attempts to open then close the file in RW mode, denying other users to place any locks.
+                  using (FileStream fs = File.Open(file.FullName, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
                   {
-                    fileLocked = false;
+                    if (fs.Length > 0)
+                    {
+                      fileLocked = false;
+                    }
+                  }
+                  if (!fileLocked)
+                  {
+                    break;
                   }
                 }
-                if (!fileLocked)
+                catch (IOException)
                 {
-                  break;
+                  try
+                  {
+                    File.SetAttributes(file.FullName, FileAttributes.ReadOnly);
+                  }
+                  catch (Exception)
+                  {
+                  }
+                  System.Threading.Thread.Sleep(50);
                 }
               }
-              catch (IOException)
+              if (!fileLocked)
+              {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                file.Delete();
+                numFiles++;
+                var t = scans.Where(p => p.FileSpec == file.FullName);
+                if (t.Any())
+                { scans.Remove(t.First()); }
+              }
+              else
+              {
+                //throw new Exception(string.Format("{0} could not be deleted.", file.FullName));
+              }
+            }
+          }
+          else
+          {
+            foreach (var file in dir.EnumerateFiles().OrderByDescending(x => x.CreationTime).Skip(settings.Default.FilesToKeep))
+            {
+              bool fileLocked = true;
+              for (int i = 0; i < 3; i++)
               {
                 try
                 {
-                  File.SetAttributes(file.FullName, FileAttributes.ReadOnly);
+                  // remove read-only attribute
+                  File.SetAttributes(file.FullName, FileAttributes.Normal);
+                  // Attempts to open then close the file in RW mode, denying other users to place any locks.
+                  using (FileStream fs = File.Open(file.FullName, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                  {
+                    if (fs.Length > 0)
+                    {
+                      fileLocked = false;
+                    }
+                  }
+                  if (!fileLocked)
+                  {
+                    break;
+                  }
                 }
-                catch (Exception)
+                catch (IOException)
                 {
+                  try
+                  {
+                    File.SetAttributes(file.FullName, FileAttributes.ReadOnly);
+                  }
+                  catch (Exception)
+                  {
+                  }
+                  System.Threading.Thread.Sleep(50);
                 }
-                System.Threading.Thread.Sleep(50);
               }
-            }
-            if (!fileLocked)
-            {
-              GC.Collect();
-              GC.WaitForPendingFinalizers();
-              file.Delete();
-              var t = scans.Where(p => p.FileSpec == file.FullName);
-              if (t.Any())
-              { scans.Remove(t.First()); }
-            }
-            else
-            {
-              //throw new Exception(string.Format("{0} could not be deleted.", file.FullName));
+              if (!fileLocked)
+              {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                file.Delete();
+                numFiles++;
+                var t = scans.Where(p => p.FileSpec == file.FullName);
+                if (t.Any())
+                { scans.Remove(t.First()); }
+              }
+              else
+              {
+                //throw new Exception(string.Format("{0} could not be deleted.", file.FullName));
+              }
             }
           }
         }
-      }
-      catch (Exception)
-      {
-        throw;
-      }
-    }
+        catch (Exception)
+        {
+          throw;
+        }
 
+      });
+      if (!silent) { UpdateStatus(string.Format("Folder cleaned. {0} files removed.", numFiles), null, new SolidColorBrush(Colors.Lime)); }
+    }
+    private void JoinDocuments(IEnumerable<Thumb> T)
+    {
+      if (T == null || !T.Any()) { return; }
+      T = T.OrderBy(p => p.Index);
+      using (PdfDocument doc = new PdfDocument())
+      {
+        foreach(var t in T)
+        {
+          try
+          {
+            bool TypeIsOk = false;
+            bool TypeIsPdf = false;
+            switch (Path.GetExtension(t.FileSpec).ToLower())
+            {
+              case ".pdf":
+                TypeIsPdf = true;
+                TypeIsOk = true;
+                break;
+              case ".jpg":
+              case ".jpeg":
+              case ".bmp":
+              case ".gif":
+              case ".png":
+                TypeIsOk = true;
+                break;
+            }
+            if (File.Exists(t.FileSpec) && TypeIsOk)
+            {
+              if (TypeIsPdf)
+              {
+                using (PdfDocument pdfDoc = PdfReader.Open(t.FileSpec, PdfDocumentOpenMode.Import))
+                {
+                  for (int x = 0; x < pdfDoc.PageCount; x++)
+                  {
+                    doc.AddPage(pdfDoc.Pages[x]);
+                  }
+                }
+              }
+              else
+              {
+                XImage img = XImage.FromFile(t.FileSpec);
+                PdfPage page = doc.AddPage();
+                var ratio = Math.Min((page.Width - 20) / img.PointWidth, (page.Height - 20) / img.PointHeight);
+                XGraphics xgr = XGraphics.FromPdfPage(doc.Pages[doc.PageCount - 1]);
+                xgr.DrawImage(img, 10, 10, img.PointWidth * ratio, img.PointHeight * ratio);
+              }
+            }
+          }
+          catch (Exception)
+          {
+          }
+        }
+        try
+        {
+          var f = string.Format(@"{0}\skannyscan_{1}.pdf", settings.Default.ScanDirectory, DateTime.Now.Ticks);
+          doc.Save(f);
+          GetAndInsertThumbFromFilename(f);
+          UpdateStatus(string.Format("PDF created. {0}",f), null, null);
+          System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
+          SetViewScans();
+          return;
+        }
+        catch (Exception)
+        {
+        }
+      }
+      UpdateStatus("PDF not created.", null, null);
+    }
+    private void GetAndInsertThumbFromFilename(string fileName)
+    {
+      Thumb t = GetThumbnail(new FileInfo(fileName));
+      if (t != null)
+      {
+        scans.Insert(0, t);
+      }
+
+    }
   }
 }

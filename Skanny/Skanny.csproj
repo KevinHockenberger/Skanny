@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>include\scanner.ico</ApplicationIcon>
+    <ApplicationIcon>include\scanner2.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ghostscript.NET, Version=1.2.1.0, Culture=neutral, PublicKeyToken=f85051de34525b59, processorArchitecture=MSIL">
@@ -186,6 +186,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="include\file-complete.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\scanner2.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
