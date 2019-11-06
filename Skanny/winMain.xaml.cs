@@ -82,6 +82,7 @@ namespace Skanny
     FileSystemWatcher watcher = new FileSystemWatcher();
     public static readonly string defaultScanDirectory = @"C:\Skanny\Scans";
     System.Threading.Timer clrHeader;
+    Point startDragPoint;
 
     private void Window_Initialized(object sender, EventArgs e)
     {
@@ -221,6 +222,7 @@ namespace Skanny
         {
           settings.Default.PicDirectory = w.PathPics;
           LoadImagesForPics();
+          watchPicDirectory();
         }
         settings.Default.ScannerColorFormat = (int)w.Color;
         settings.Default.ScannerDPI = w.DPI;
@@ -391,7 +393,7 @@ namespace Skanny
       if (t.Any())
       {
         var n = t.Where(p => p.Index != null).OrderBy(p => p.Index);
-        if (n.Any() && n.Count()>1)
+        if (n.Any() && n.Count() > 1)
         {
           if (MessageBox.Show(string.Format("Create a {0} page PDF document from selected files?", n.Count()), "New document", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
           {
@@ -733,13 +735,16 @@ namespace Skanny
     }
     private void thumbMouseMove(object sender, MouseEventArgs e)
     {
-      if (sender is Grid g && g.DataContext is Thumb t && e.LeftButton == MouseButtonState.Pressed)
+      if (sender is Grid g && g.DataContext is Thumb t && !t.ToPdf && e.LeftButton == MouseButtonState.Pressed)
       {
-        var obj = new DataObject();
-        System.Collections.Specialized.StringCollection files = new System.Collections.Specialized.StringCollection();
-        files.Add(t.FileSpec);
-        obj.SetFileDropList(files);
-        var dd = DragDrop.DoDragDrop(new ContentElement(), obj, DragDropEffects.Copy);
+        Vector diff = startDragPoint - e.GetPosition(null);
+        if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+        {
+          var obj = new DataObject();
+          System.Collections.Specialized.StringCollection files = new System.Collections.Specialized.StringCollection { t.FileSpec };
+          obj.SetFileDropList(files);
+          DragDrop.DoDragDrop(new ContentElement(), obj, DragDropEffects.Copy);
+        }
       }
     }
     private void thumbMouseEnter(object sender, MouseEventArgs e)
@@ -765,6 +770,7 @@ namespace Skanny
         {
           if (File.Exists(t.FileSpec))
           {
+            UpdateStatus("Opening file...", null, null);
             Process process = new Process
             {
               StartInfo = new ProcessStartInfo
@@ -776,13 +782,13 @@ namespace Skanny
           }
           else
           {
-            MessageBox.Show("File does not exist!");
+            UpdateStatus("File does not exist!", null, new SolidColorBrush(Colors.Yellow));
           }
         }
       }
       catch (Exception ex)
       {
-        MessageBox.Show(ex.Message);
+        UpdateStatus(ex.Message, null, new SolidColorBrush(Colors.Red));
       }
     }
     private void fileDelete(object sender, RoutedEventArgs e)
@@ -798,21 +804,22 @@ namespace Skanny
               File.SetAttributes(t.FileSpec, FileAttributes.Normal);
               File.Delete(t.FileSpec);
               LoadImages();
+              UpdateStatus("File deleted.", null, null);
             }
             catch (Exception ex)
             {
-              MessageBox.Show(ex.Message);
+              UpdateStatus(ex.Message, null, new SolidColorBrush(Colors.Red));
             }
           }
           else
           {
-            MessageBox.Show("File does not exist!");
+            UpdateStatus("File does not exist!", null, new SolidColorBrush(Colors.Yellow));
           }
         }
       }
       catch (Exception ex)
       {
-        MessageBox.Show(ex.Message);
+        UpdateStatus(ex.Message, null, new SolidColorBrush(Colors.Red));
       }
     }
     private void thumbGotFocus(object sender, RoutedEventArgs e)
@@ -839,7 +846,8 @@ namespace Skanny
       }
       DirectoryInfo dir = new DirectoryInfo(settings.Default.ScanDirectory);
       int numFiles = 0;
-      Dispatcher.Invoke(()=> {
+      Dispatcher.Invoke(() =>
+      {
         try
         {
           if (settings.Default.FilesToKeep == 0)
@@ -961,7 +969,7 @@ namespace Skanny
       T = T.OrderBy(p => p.Index);
       using (PdfDocument doc = new PdfDocument())
       {
-        foreach(var t in T)
+        foreach (var t in T)
         {
           try
           {
@@ -1012,7 +1020,7 @@ namespace Skanny
           var f = string.Format(@"{0}\skannyscan_{1}.pdf", settings.Default.ScanDirectory, DateTime.Now.Ticks);
           doc.Save(f);
           GetAndInsertThumbFromFilename(f);
-          UpdateStatus(string.Format("PDF created. {0}",f), null, null);
+          UpdateStatus(string.Format("PDF created. {0}", f), null, null);
           System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
           SetViewScans();
           return;
