@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.705
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skanny", "Skanny\Skanny.csproj", "{B1563497-BAAB-4150-909E-EBDAEDF20C3E}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Skanny Installer", "Skanny Installer\Skanny Installer.vdproj", "{1287D5E8-1A1D-486A-8C70-476C839DD190}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{B1563497-BAAB-4150-909E-EBDAEDF20C3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1563497-BAAB-4150-909E-EBDAEDF20C3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1563497-BAAB-4150-909E-EBDAEDF20C3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1287D5E8-1A1D-486A-8C70-476C839DD190}.Debug|Any CPU.ActiveCfg = Debug
+		{1287D5E8-1A1D-486A-8C70-476C839DD190}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
