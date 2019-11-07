@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Skanny"
         mc:Ignorable="d"
-        Title="Settings" Height="536" MinHeight="450" MinWidth="420" Width="500" WindowStartupLocation="CenterOwner" Icon="include/settings.png">
+        Title="Settings" Height="533" MinHeight="450" MinWidth="420" Width="543" WindowStartupLocation="CenterOwner" Icon="include/settings.png" ResizeMode="CanResizeWithGrip" >
   <Window.Resources>
     <Style TargetType="{x:Type local:winSettings}">
       <Setter Property="FontFamily" Value="Arial" />
@@ -30,7 +30,7 @@
     </Style>
 
   </Window.Resources>
-  <Grid>
+  <Grid Margin="5">
     <Grid.RowDefinitions>
       <RowDefinition/>
       <RowDefinition Height="50"/>

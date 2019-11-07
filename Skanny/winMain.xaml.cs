@@ -199,6 +199,16 @@ namespace Skanny
         this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
       }
     }
+    private bool DirectoryExistsOrCreate(string path)
+    {
+      if (Directory.Exists(path)) { return true; }
+      else
+      {
+        try { Directory.CreateDirectory(path); }
+        catch (Exception) { return false; }
+        return true;
+      }
+    }
     private void OpenSettings()
     {
       winSettings w = new winSettings()
@@ -215,14 +225,20 @@ namespace Skanny
       {
         if (settings.Default.ScanDirectory != w.PathScans)
         {
-          settings.Default.ScanDirectory = w.PathScans;
-          LoadImagesForScans();
+          if (DirectoryExistsOrCreate(w.PathScans))
+          {
+            settings.Default.ScanDirectory = w.PathScans;
+            LoadImagesForScans();
+          }
         }
         if (settings.Default.PicDirectory != w.PathPics)
         {
-          settings.Default.PicDirectory = w.PathPics;
-          LoadImagesForPics();
-          watchPicDirectory();
+          if (DirectoryExistsOrCreate(w.PathScans))
+          {
+            settings.Default.PicDirectory = w.PathPics;
+            LoadImagesForPics();
+            watchPicDirectory();
+          }
         }
         settings.Default.ScannerColorFormat = (int)w.Color;
         settings.Default.ScannerDPI = w.DPI;
@@ -243,8 +259,7 @@ namespace Skanny
       Dictionary<string, string> devices = WiaScanner.GetDevices();
       if (!devices.Values.Contains(defaultScanner))
       {
-        MessageBoxResult result = MessageBox.Show("The default scanner was not detected. Would you like to change the default scanner?", "Default Scanner Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result == MessageBoxResult.Yes)
+        if (new winMessageBox(this, "Default Scanner missing", "The default scanner was not detected. Would you like to change the default scanner?", MessageBoxButton.YesNo,MessageBoxImage.Question).ShowDialog() == true)
         {
           OpenSettings();
         }
@@ -257,8 +272,7 @@ namespace Skanny
           bool scanComplete = false;
           while (!scanComplete)
           {
-            MessageBoxResult result = MessageBox.Show(string.Format("Scan more?", images.Count), "Scan Complete", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result == MessageBoxResult.Yes)
+            if (new winMessageBox(this, "Scan complete", "Scan more?", MessageBoxButton.YesNo, MessageBoxImage.Question).ShowDialog() == true)
             {
               try
               {
@@ -268,8 +282,7 @@ namespace Skanny
               {
                 if (images.Any())
                 {
-                  result = MessageBox.Show(string.Format("{0}\nAttempt to scan again? If yes, insert next page before confirming.", ex.Message), "Scan Error", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                  if (result == MessageBoxResult.Yes)
+                  if (new winMessageBox(this, "Scan error", string.Format("{0}\nAttempt to scan again? If yes, insert document before confirming.", ex.Message), MessageBoxButton.YesNo, MessageBoxImage.Error).ShowDialog() == true)
                   {
                     images.AddRange(WiaScanner.Scan(defaultScanner));
                   }
@@ -277,6 +290,7 @@ namespace Skanny
                   {
                     return false;
                   }
+
                 }
                 else
                 {
@@ -284,7 +298,7 @@ namespace Skanny
                 }
               }
             }
-            else if (result == MessageBoxResult.No)
+            else
             {
               scanComplete = true;
             }
@@ -293,7 +307,7 @@ namespace Skanny
         }
         catch (Exception ex)
         {
-          MessageBox.Show(ex.Message, "Scan Error", MessageBoxButton.OK, MessageBoxImage.Error);
+          new winMessageBox(this, "Scan error", ex.Message, MessageBoxButton.OK, MessageBoxImage.Error).ShowDialog();
           return false;
         }
       }
@@ -350,17 +364,17 @@ namespace Skanny
             }
             else
             {
-              MessageBox.Show("No images were acquired in the scan process.");
+              new winMessageBox(this, "Result", "No images were acquired in the scan process.", MessageBoxButton.OK, MessageBoxImage.Hand).ShowDialog();
             }
           }
           else
           {
-            MessageBox.Show("Scanning of documents could not be completed.");
+            new winMessageBox(this, "Result", "Scanning of documents could not be completed.", MessageBoxButton.OK, MessageBoxImage.Hand).ShowDialog();
           }
         }
         catch (Exception ex)
         {
-          MessageBox.Show(ex.Message);
+          new winMessageBox(this, "Error", ex.Message, MessageBoxButton.OK, MessageBoxImage.Error).ShowDialog();
         }
       }
     }
@@ -556,7 +570,7 @@ namespace Skanny
     {
       if (string.IsNullOrWhiteSpace(settings.Default.ScanDirectory) || !Directory.Exists(settings.Default.ScanDirectory))
       {
-        MessageBox.Show("Scan folder is not set or does not exist. Use Settings to change the folder.");
+        new winMessageBox(this, "Where to boss?", "Scan folder is not set or does not exist. Use Settings to change the folder.", MessageBoxButton.OK,MessageBoxImage.Warning).ShowDialog();
         return false;
       }
       return true;
@@ -732,6 +746,10 @@ namespace Skanny
         throw;
       }
       return ret;
+    }
+    private void _PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+      startDragPoint = e.GetPosition(null);
     }
     private void thumbMouseMove(object sender, MouseEventArgs e)
     {

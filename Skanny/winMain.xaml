@@ -294,7 +294,7 @@
               <ContentPresenter Content="{Binding}">
                 <ContentPresenter.ContentTemplate>
                   <DataTemplate>
-                    <Grid MouseEnter="thumbMouseEnter" MouseLeave="thumbMouseLeave" MouseMove="thumbMouseMove" GotFocus="thumbGotFocus" >
+                    <Grid MouseEnter="thumbMouseEnter" MouseLeave="thumbMouseLeave" MouseMove="thumbMouseMove" GotFocus="thumbGotFocus" PreviewMouseLeftButtonDown="_PreviewMouseLeftButtonDown" >
                       <Grid.ContextMenu>
                         <ContextMenu>
                           <MenuItem Header="Open" Click="fileOpen" />

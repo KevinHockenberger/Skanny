@@ -79,6 +79,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="winMessageBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="winSettings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -92,6 +96,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="clsShared.cs" />
+    <Compile Include="winMessageBox.xaml.cs">
+      <DependentUpon>winMessageBox.xaml</DependentUpon>
+    </Compile>
     <Compile Include="winSettings.xaml.cs">
       <DependentUpon>winSettings.xaml</DependentUpon>
     </Compile>
@@ -189,6 +196,18 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="include\scanner2.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\info.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\question.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\warning.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\stop.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
