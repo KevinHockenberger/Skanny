@@ -56,7 +56,7 @@
     <Reference Include="PdfSharp.Charting-gdi, Version=1.50.5147.0, Culture=neutral, PublicKeyToken=f94615aa0424f9eb, processorArchitecture=MSIL">
       <HintPath>..\packages\PDFsharp-MigraDoc-gdi.1.50.5147\lib\net20\PdfSharp.Charting-gdi.dll</HintPath>
     </Reference>
-    <Reference Include="PresentationFramework.Aero2" />
+    <Reference Include="PresentationFramework.Aero" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -208,6 +208,18 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="include\stop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\arrowUp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\arrowRight.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\arrowLeft.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="include\arrowDown.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

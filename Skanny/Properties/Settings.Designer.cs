@@ -166,5 +166,17 @@ namespace Skanny.Properties {
                 this["FilesToKeep"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public byte SidebarLocation {
+            get {
+                return ((byte)(this["SidebarLocation"]));
+            }
+            set {
+                this["SidebarLocation"] = value;
+            }
+        }
     }
 }

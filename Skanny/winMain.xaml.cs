@@ -51,7 +51,15 @@ namespace Skanny
   {
     public winMain()
     {
-      InitializeComponent();
+      try
+      {
+        InitializeComponent();
+      }
+      catch (Exception ex)
+      {
+        System.Windows.Forms.MessageBox.Show(ex.Message, "Fatal Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+        throw;
+      }
     }
     public class Thumb : INotifyPropertyChanged
     {
@@ -114,8 +122,8 @@ namespace Skanny
       Height = settings.Default.LastWindowRect.Height;
       Top = settings.Default.LastWindowRect.Top;
       Left = settings.Default.LastWindowRect.Left;
-      gridMain.ColumnDefinitions[0].Width = new GridLength(settings.Default.SidebarWidth);
       cmbSize.SelectedItem = (AvailableThumbSizes)settings.Default.LastThumbSize;
+      SetSidebarLocation(settings.Default.SidebarLocation);
       if (settings.Default.LastView != 0)
       {
         SetViewPics();
@@ -125,7 +133,27 @@ namespace Skanny
     {
       settings.Default.LastWindowState = this.WindowState;
       settings.Default.LastWindowRect = this.RestoreBounds;
-      settings.Default.SidebarWidth = gridMain.ColumnDefinitions[0].Width.Value;
+      try
+      {
+        switch (settings.Default.SidebarLocation)
+        {
+          case 1:
+            settings.Default.SidebarWidth = gridMain.ColumnDefinitions[2].Width.Value;
+            break;
+          case 2:
+            settings.Default.SidebarWidth = gridMain.RowDefinitions[0].Height.Value;
+            break;
+          case 3:
+            settings.Default.SidebarWidth = gridMain.RowDefinitions[2].Height.Value;
+            break;
+          default:
+            settings.Default.SidebarWidth = gridMain.ColumnDefinitions[0].Width.Value;
+            break;
+        }
+      }
+      catch (Exception)
+      {
+      }
       settings.Default.LastThumbSize = (int)(AvailableThumbSizes)(cmbSize.SelectedItem ?? AvailableThumbSizes.Medium);
       settings.Default.LastView = rdoPics.IsChecked == true ? (byte)1 : (byte)0;
       settings.Default.Save();
@@ -182,14 +210,46 @@ namespace Skanny
     }
     private void BtnApp_Click(object sender, RoutedEventArgs e)
     {
-      if (gridMain.ColumnDefinitions[0].Width.Value > 0)
+      dynamic ColRow;
+      switch (settings.Default.SidebarLocation)
       {
-        gridMain.ColumnDefinitions[0].Width = new GridLength(0);
+        default:
+          ColRow = gridMain.ColumnDefinitions[0];
+          break;
+        case 1:
+          ColRow = gridMain.ColumnDefinitions[2];
+          break;
+        case 2:
+          ColRow = gridMain.RowDefinitions[0];
+          break;
+        case 3:
+          ColRow = gridMain.RowDefinitions[2];
+          break;
       }
-      else
+
+      if (ColRow is RowDefinition)
       {
-        gridMain.ColumnDefinitions[0].Width = new GridLength(100);
+        if (((RowDefinition)ColRow).Height.Value > 0)
+        {
+          ((RowDefinition)ColRow).Height = new GridLength(0);
+        }
+        else
+        {
+          ((RowDefinition)ColRow).Height = new GridLength(settings.Default.SidebarWidth);
+        }
       }
+      else if (ColRow is ColumnDefinition)
+      {
+        if (((ColumnDefinition)ColRow).Width.Value > 0)
+        {
+          ((ColumnDefinition)ColRow).Width = new GridLength(0);
+        }
+        else
+        {
+          ((ColumnDefinition)ColRow).Width = new GridLength(settings.Default.SidebarWidth);
+        }
+      }
+
     }
     private void _MouseDown(object sender, MouseButtonEventArgs e)
     {
@@ -259,7 +319,7 @@ namespace Skanny
       Dictionary<string, string> devices = WiaScanner.GetDevices();
       if (!devices.Values.Contains(defaultScanner))
       {
-        if (new winMessageBox(this, "Default Scanner missing", "The default scanner was not detected. Would you like to change the default scanner?", MessageBoxButton.YesNo,MessageBoxImage.Question).ShowDialog() == true)
+        if (new winMessageBox(this, "Default Scanner missing", "The default scanner was not detected. Would you like to change the default scanner?", MessageBoxButton.YesNo, MessageBoxImage.Question).ShowDialog() == true)
         {
           OpenSettings();
         }
@@ -409,7 +469,8 @@ namespace Skanny
         var n = t.Where(p => p.Index != null).OrderBy(p => p.Index);
         if (n.Any() && n.Count() > 1)
         {
-          if (MessageBox.Show(string.Format("Create a {0} page PDF document from selected files?", n.Count()), "New document", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+          if (new winMessageBox(this, "New document", string.Format("Create a {0} page PDF document from selected files?", n.Count()), MessageBoxButton.YesNo, MessageBoxImage.Question).ShowDialog() == true)
+          //if (MessageBox.Show(string.Format("Create a {0} page PDF document from selected files?", n.Count()), "New document", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
           {
             // create the new pdf
             UpdateStatus("Creating new PDF. Please wait...");
@@ -570,7 +631,7 @@ namespace Skanny
     {
       if (string.IsNullOrWhiteSpace(settings.Default.ScanDirectory) || !Directory.Exists(settings.Default.ScanDirectory))
       {
-        new winMessageBox(this, "Where to boss?", "Scan folder is not set or does not exist. Use Settings to change the folder.", MessageBoxButton.OK,MessageBoxImage.Warning).ShowDialog();
+        new winMessageBox(this, "Where to boss?", "Scan folder is not set or does not exist. Use Settings to change the folder.", MessageBoxButton.OK, MessageBoxImage.Warning).ShowDialog();
         return false;
       }
       return true;
@@ -1056,6 +1117,103 @@ namespace Skanny
       {
         scans.Insert(0, t);
       }
+
+    }
+    private void btnLeft_Click(object sender, RoutedEventArgs e)
+    {
+      // align sidebar to left
+      SetSidebarLocation(0);
+    }
+    private void btnRight_Click(object sender, RoutedEventArgs e)
+    {
+      // align sidebar to right
+      SetSidebarLocation(1);
+    }
+    private void btnDown_Click(object sender, RoutedEventArgs e)
+    {
+      // align sidebar to bottom
+      SetSidebarLocation(3);
+    }
+    private void btnUp_Click(object sender, RoutedEventArgs e)
+    {
+      // align sidebar to top
+      SetSidebarLocation(2);
+    }
+    private void SetSidebarLocation(byte n)
+    {
+      switch (n)
+      {
+        default: // ############################################################### LEFT
+          settings.Default.SidebarLocation = 0;
+          SetWindowHorizontalStyling();
+          gridMain.ColumnDefinitions[0].Width = new GridLength(settings.Default.SidebarWidth, GridUnitType.Pixel);
+          gridMain.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
+          Grid.SetColumn(LeftSidePanel, 0);
+          Grid.SetColumn(gsMainSplitter, 1);
+          Grid.SetColumn(gridMainView, 2);
+          break;
+        case 1: // ############################################################### RIGHT
+          settings.Default.SidebarLocation = 1;
+          SetWindowHorizontalStyling();
+          gridMain.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+          gridMain.ColumnDefinitions[2].Width = new GridLength(settings.Default.SidebarWidth, GridUnitType.Pixel);
+          Grid.SetColumn(LeftSidePanel, 2);
+          Grid.SetColumn(gsMainSplitter, 1);
+          Grid.SetColumn(gridMainView, 0);
+          break;
+        case 2: // ############################################################### TOP
+          settings.Default.SidebarLocation = 2;
+          SetWindowVerticalStyling();
+          gridMain.RowDefinitions[0].Height = new GridLength(settings.Default.SidebarWidth, GridUnitType.Pixel);
+          gridMain.RowDefinitions[2].Height = new GridLength(1, GridUnitType.Star);
+          Grid.SetRow(LeftSidePanel, 0);
+          Grid.SetRow(gsMainSplitter, 1);
+          Grid.SetRow(gridMainView, 2);
+          break;
+        case 3: // ############################################################### BOTTOM
+          settings.Default.SidebarLocation = 3;
+          SetWindowVerticalStyling();
+          gridMain.RowDefinitions[0].Height = new GridLength(1, GridUnitType.Star);
+          gridMain.RowDefinitions[2].Height = new GridLength(settings.Default.SidebarWidth, GridUnitType.Pixel);
+          Grid.SetRow(LeftSidePanel, 2);
+          Grid.SetRow(gsMainSplitter, 1);
+          Grid.SetRow(gridMainView, 0);
+          break;
+      }
+
+    }
+    private void SetWindowHorizontalStyling()
+    {
+      gridMain.ColumnDefinitions.Clear();
+      gridMain.RowDefinitions.Clear();
+      gridMain.ColumnDefinitions.Add(new ColumnDefinition()); // { Width = new GridLength(settings.Default.SidebarWidth, GridUnitType.Pixel) });
+      gridMain.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(5, GridUnitType.Pixel) });
+      gridMain.ColumnDefinitions.Add(new ColumnDefinition()); // { Width = new GridLength(1, GridUnitType.Star) });
+      gsMainSplitter.HorizontalAlignment = HorizontalAlignment.Stretch;
+      LeftSidePanel.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+      LeftSidePanel.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+      stackOptions.Orientation = Orientation.Vertical;
+      stackOptions.Margin = new Thickness(0, 0, 0, 84);
+      btnScan.Margin = new Thickness(0, 10, 0, 0);
+      borderSidebarLocation.HorizontalAlignment = HorizontalAlignment.Stretch;
+      borderSidebarLocation.VerticalAlignment = VerticalAlignment.Bottom;
+
+    }
+    private void SetWindowVerticalStyling()
+    {
+      gridMain.ColumnDefinitions.Clear();
+      gridMain.RowDefinitions.Clear();
+      gridMain.RowDefinitions.Add(new RowDefinition()); // { Height = new GridLength(settings.Default.SidebarWidth, GridUnitType.Pixel) });
+      gridMain.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(5, GridUnitType.Pixel) });
+      gridMain.RowDefinitions.Add(new RowDefinition()); // { Height = new GridLength(1, GridUnitType.Star) });
+      gsMainSplitter.VerticalAlignment = VerticalAlignment.Stretch;
+      LeftSidePanel.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+      LeftSidePanel.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
+      stackOptions.Orientation = Orientation.Horizontal;
+      stackOptions.Margin = new Thickness(0, 0, 84, 0);
+      btnScan.Margin = new Thickness(10, 0, 0, 0);
+      borderSidebarLocation.HorizontalAlignment = HorizontalAlignment.Right;
+      borderSidebarLocation.VerticalAlignment = VerticalAlignment.Stretch;
 
     }
   }

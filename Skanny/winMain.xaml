@@ -4,9 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Skanny"
-        xmlns:Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2" 
+        xmlns:Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero" 
         mc:Ignorable="d"
-        Title="Skanny" Height="545" Width="361.481" WindowStyle="None" Loaded="Window_Loaded" Closing="Window_Closing" Initialized="Window_Initialized" Icon="include/scanner.ico">
+        Title="Skanny" Height="612" Width="361.481" WindowStyle="None" Loaded="Window_Loaded" Closing="Window_Closing" Initialized="Window_Initialized" Icon="include/scanner.ico">
   <Window.Resources>
     <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey }" Color="red" />
     <SolidColorBrush x:Key="{x:Static SystemColors.HotTrackBrushKey }" Color="red" />
@@ -79,10 +79,6 @@
                     <Border x:Name="templateRoot" BorderBrush="#FFACACAC" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
                       <Border.Background>
                         <SolidColorBrush Color="#FF292929" />
-                        <!--<LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
-                          <GradientStop Color="#FFF0F0F0" Offset="0"/>
-                          <GradientStop Color="#FFE5E5E5" Offset="1"/>
-                        </LinearGradientBrush>-->
                       </Border.Background>
                       <Border x:Name="splitBorder" BorderBrush="Transparent" BorderThickness="1" HorizontalAlignment="Right" Margin="0" SnapsToDevicePixels="True" Width="{DynamicResource {x:Static SystemParameters.VerticalScrollBarWidthKey}}">
                         <Path x:Name="Arrow" Data="F1M0,0L2.667,2.66665 5.3334,0 5.3334,-1.78168 2.6667,0.88501 0,-1.78168 0,0z" Fill="#FF606060" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center"/>
@@ -112,11 +108,6 @@
                         <Setter Property="Background" TargetName="templateRoot">
                           <Setter.Value>
                             <SolidColorBrush Color="#FF292929" />
-
-                            <!--<LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
-                              <GradientStop Color="#FFECF4FC" Offset="0"/>
-                              <GradientStop Color="#FFDCECFC" Offset="1"/>
-                            </LinearGradientBrush>-->
                           </Setter.Value>
                         </Setter>
                         <Setter Property="BorderBrush" TargetName="templateRoot" Value="#FF7EB4EA"/>
@@ -131,10 +122,6 @@
                         <Setter Property="Background" TargetName="splitBorder">
                           <Setter.Value>
                             <SolidColorBrush Color="#FF292929" />
-                            <!--<LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
-                              <GradientStop Color="#FFEBF4FC" Offset="0"/>
-                              <GradientStop Color="#FFDCECFC" Offset="1"/>
-                            </LinearGradientBrush>-->
                           </Setter.Value>
                         </Setter>
                         <Setter Property="BorderBrush" TargetName="splitBorder" Value="#FF7EB4EA"/>
@@ -245,11 +232,7 @@
         </Setter.Value>
       </Setter>
     </Style>
-
-
     <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
-
-
     <Style TargetType="{x:Type ListView}">
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="Foreground" Value="White"/>
@@ -358,10 +341,6 @@
         </Setter.Value>
       </Setter>
     </Style>
-
-
-
-
   </Window.Resources>
   <DockPanel Background="{StaticResource BaseColor}">
     <Border DockPanel.Dock="Top" BorderThickness="1,0" MouseDown="_MouseDown" >
@@ -460,27 +439,29 @@
           <ColumnDefinition Width="5"/>
           <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <GridSplitter HorizontalAlignment="Stretch" Margin="0" Grid.Column="1" BorderBrush="Black" Background="#FF636363"/>
+        <GridSplitter x:Name="gsMainSplitter" HorizontalAlignment="Stretch" Margin="0" Grid.Column="1" BorderBrush="Black" Background="#FF636363"/>
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" x:Name="LeftSidePanel">
           <Grid>
-            <StackPanel>
-              <Label Style="{StaticResource lblDescriptor}" Content="preview size" Margin="2,2,2,0"/>
-              <ComboBox Template="{DynamicResource cmbStyle}" x:Name="cmbSize" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:AvailableThumbSizes}}}" SelectionChanged="cmbSize_SelectionChanged" />
+            <StackPanel x:Name="stackOptions" Margin="0,0,0,84">
+              <StackPanel>
+                <Label Style="{StaticResource lblDescriptor}" Content="preview size" Margin="2,2,2,0"/>
+                <ComboBox Template="{DynamicResource cmbStyle}" x:Name="cmbSize" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:AvailableThumbSizes}}}" SelectionChanged="cmbSize_SelectionChanged" />
+              </StackPanel>
               <Button x:Name="btnScan" Margin="0,10,0,0" Padding="0,5" Click="btnScan_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
                 <StackPanel>
                   <Image Source="include/scanner.png" Height="60" Width="60">
                   </Image>
-                  <Label Content="Scan" HorizontalAlignment="Center" Padding="0" FontSize="20"/>
+                  <Label Content="Scan" Padding="5" FontSize="20"/>
                 </StackPanel>
               </Button>
               <Button x:Name="btnReload" Margin="0" Padding="0,2,0,2" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnReload_Click" >
                 <StackPanel>
                   <Image Source="include/recycle.png" Height="32" Width="32">
                   </Image>
-                  <Label Content="Reload" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
+                  <Label Content="Reload" Padding="5" FontSize="14"/>
                 </StackPanel>
               </Button>
-              <Grid Margin="0,10,0,0">
+              <Grid Margin="10">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition/>
                   <ColumnDefinition/>
@@ -488,32 +469,68 @@
                 <RadioButton x:Name="rdoScans" Style="{StaticResource rdoScanOrPic}" Content="include/scanner-white.png" Height="32" IsChecked="True" Cursor="Hand" Checked="RadioButton_Checked" Unchecked="RadioButton_Checked"/>
                 <RadioButton x:Name="rdoPics" Style="{StaticResource rdoScanOrPic}" Content="include/camera.png" Height="32" Grid.Column="1" Cursor="Hand" Checked="RadioButton_Checked" Unchecked="RadioButton_Checked"/>
               </Grid>
-              <Button x:Name="btnConfig" Margin="0,10,0,0" Padding="0,2,0,2" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnConfig_Click" >
+              <Button x:Name="btnConfig" Margin="0" Padding="5" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnConfig_Click" >
                 <StackPanel>
                   <Image Source="include/settings.png" Height="32" Width="32">
                   </Image>
-                  <Label Content="Settings" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
+                  <Label Content="Settings" Padding="0" FontSize="14"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="btnClean" Padding="0,2,0,2" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnClean_Click" >
+              <Button x:Name="btnClean" Padding="5" BorderThickness="1" BorderBrush="White" Cursor="Hand" Click="BtnClean_Click" >
                 <StackPanel>
                   <Image Source="include/trash.png" Height="32" Width="32">
                   </Image>
-                  <Label Content="Clean" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
+                  <Label Content="Clean" Padding="0" FontSize="14"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="btnPdf" Padding="0,2,0,2" Click="BtnPdf_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
+              <Button x:Name="btnPdf" Padding="5" Click="BtnPdf_Click" BorderThickness="1" BorderBrush="White" Cursor="Hand" >
                 <StackPanel>
                   <Image Source="include/joinPdf.png" Width="32" Height="32" />
-                  <Label Content="Join" HorizontalAlignment="Center" Padding="0" FontSize="14"/>
+                  <Label Content="Join" Padding="0" FontSize="14"/>
                 </StackPanel>
               </Button>
             </StackPanel>
+            <Border x:Name="borderSidebarLocation" VerticalAlignment="Bottom" BorderThickness="1" BorderBrush="Transparent">
+              <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition />
+                  <ColumnDefinition />
+                  <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/>
+                  <RowDefinition/>
+                  <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="1" Grid.Column="0" CornerRadius="0" BorderThickness="1" BorderBrush="DimGray" Margin="0,-1">
+                  <Button Click="btnLeft_Click" Cursor="Hand" BorderBrush="{x:Null}" Background="{x:Null}">
+                    <Image Source="include/arrowLeft.png" Height="16" Width="16" Margin="2"/>
+                  </Button>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" CornerRadius="0" BorderThickness="1" BorderBrush="DimGray" Margin="-1,0">
+                  <Button Click="btnUp_Click" Cursor="Hand" BorderBrush="{x:Null}" Background="{x:Null}">
+                    <Image Source="include/arrowUp.png" Height="16" Width="16" Margin="2"/>
+                  </Button>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" CornerRadius="0" BorderThickness="1" BorderBrush="DimGray" Margin="-1,0">
+                  <Button Click="btnDown_Click" Cursor="Hand" BorderBrush="{x:Null}" Background="{x:Null}">
+                    <Image Source="include/arrowDown.png" Height="16" Width="16" Margin="2"/>
+                  </Button>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="2" CornerRadius="0" BorderThickness="1" BorderBrush="DimGray" Margin="0,-1">
+                  <Button Click="btnRight_Click" Cursor="Hand" BorderBrush="{x:Null}" Background="{x:Null}" >
+                    <Image Source="include/arrowRight.png" Height="16" Width="16" Margin="2"/>
+                  </Button>
+                </Border>
+              </Grid>
+            </Border>
           </Grid>
         </ScrollViewer>
-        <Grid Grid.Column="2" >
+        <Grid x:Name="gridMainView" Grid.Column="2" >
+
           <ListView x:Name="listScans" />
           <ListView x:Name="listPics" />
+
         </Grid>
       </Grid>
     </Border>
