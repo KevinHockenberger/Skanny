@@ -737,7 +737,7 @@ namespace Skanny
               bmp.BeginInit();
               bmp.CacheOption = BitmapCacheOption.OnLoad;
               bmp.UriSource = src;
-              bmp.DecodePixelWidth = (width <= 200 ? 500 : (int)width);
+              bmp.DecodePixelWidth = width < 500 ? 500 : width;
               bmp.EndInit();
               t.Image = bmp;
             }

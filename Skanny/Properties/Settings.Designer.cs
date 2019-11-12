@@ -97,7 +97,7 @@ namespace Skanny.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\\\Skanny\\Scans")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Skanny\\Scans")]
         public string ScanDirectory {
             get {
                 return ((string)(this["ScanDirectory"]));

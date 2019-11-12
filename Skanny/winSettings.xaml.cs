@@ -80,7 +80,6 @@ namespace Skanny
       set
       { lblDefaultDevice.Content = value; }
     }
-
     public winSettings()
     {
       InitializeComponent();
@@ -128,21 +127,55 @@ namespace Skanny
       await System.Threading.Tasks.Task.Delay(100);
       PopulateDeviceList();
     }
+
+    //public static Dictionary<string, string> GetDevices()
+    //{
+    //  Dictionary<string, string> devices = new Dictionary<string, string>();
+    //  WIA.DeviceManager manager = new WIA.DeviceManager();
+
+    //  foreach (WIA.DeviceInfo info in manager.DeviceInfos)
+    //  {
+    //    System.Windows.Forms.MessageBox.Show(info.DeviceID);
+    //    foreach (WIA.Property p in info.Properties)
+    //    {
+    //      if (p.Name == "Name")
+    //      {
+    //        devices.Add(info.DeviceID, p.get_Value());
+    //      }
+    //    }
+    //  }
+    //  return devices;
+    //}
+
+
     private void PopulateDeviceList()
     {
-      Dictionary<string, string> devices = WiaScanner.GetDevices();
+
+
+
 
       WIA.DeviceManager manager = new WIA.DeviceManager();
+
       foreach (WIA.DeviceInfo info in manager.DeviceInfos)
       {
         if (info.Type == WIA.WiaDeviceType.ScannerDeviceType)
         {
-          if (devices.ContainsKey(info.DeviceID))
+          foreach (WIA.Property p in info.Properties)
           {
-            listDevices.Items.Add(devices[info.DeviceID]);
+            if (p.Name == "Name")
+            {
+              listDevices.Items.Add(p.get_Value());
+            }
           }
         }
       }
+
+
+
+
+
+
+
       if (listDevices.Items.Count == 0)
       {
         lblAvailDevices.Content = "Available devices: None found";

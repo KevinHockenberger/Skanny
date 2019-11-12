@@ -21,7 +21,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ScanDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\\Skanny\Scans</Value>
+      <Value Profile="(Default)">C:\Skanny\Scans</Value>
     </Setting>
     <Setting Name="LastView" Type="System.Byte" Scope="User">
       <Value Profile="(Default)">0</Value>
