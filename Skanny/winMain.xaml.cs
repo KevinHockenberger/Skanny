@@ -1198,6 +1198,7 @@ namespace Skanny
       stackOptions.Orientation = Orientation.Vertical;
       stackOptions.Margin = new Thickness(0, 0, 0, 84);
       btnScan.Margin = new Thickness(0, 10, 0, 0);
+      btnScanStack.Orientation = Orientation.Vertical;
       borderSidebarLocation.HorizontalAlignment = HorizontalAlignment.Stretch;
       borderSidebarLocation.VerticalAlignment = VerticalAlignment.Bottom;
 
@@ -1215,6 +1216,7 @@ namespace Skanny
       stackOptions.Orientation = Orientation.Horizontal;
       stackOptions.Margin = new Thickness(0, 0, 84, 0);
       btnScan.Margin = new Thickness(10, 0, 0, 0);
+      btnScanStack.Orientation = Orientation.Horizontal;
       borderSidebarLocation.HorizontalAlignment = HorizontalAlignment.Right;
       borderSidebarLocation.VerticalAlignment = VerticalAlignment.Stretch;
 
