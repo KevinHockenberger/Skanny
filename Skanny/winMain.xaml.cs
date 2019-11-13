@@ -303,7 +303,7 @@ namespace Skanny
         settings.Default.ScannerColorFormat = (int)w.Color;
         settings.Default.ScannerDPI = w.DPI;
         settings.Default.DefaultScannerId = w.DefaultDevice;
-        if (settings.Default.FilesToKeep != w.KeepRecent)
+        if (settings.Default.FilesToKeep > w.KeepRecent)
         {
           settings.Default.FilesToKeep = w.KeepRecent;
           System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
@@ -383,6 +383,7 @@ namespace Skanny
           {
             if (images != null && images.Any())
             {
+              if (settings.Default.FilesToKeep == 0) {  CleanScanDirectory(true); }
               var now = DateTime.Now.Ticks;
               var fileName = "";
               if (images.Count == 1)
@@ -420,7 +421,7 @@ namespace Skanny
               File.SetAttributes(fileName, FileAttributes.ReadOnly);
               GetAndInsertThumbFromFilename(fileName);
               SetViewScans();
-              System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
+              if (settings.Default.FilesToKeep > 0) { System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); }); }
             }
             else
             {
@@ -1045,6 +1046,8 @@ namespace Skanny
     private void JoinDocuments(IEnumerable<Thumb> T)
     {
       if (T == null || !T.Any()) { return; }
+      if (settings.Default.FilesToKeep == 0) {CleanScanDirectory(true); }
+
       T = T.OrderBy(p => p.Index);
       using (PdfDocument doc = new PdfDocument())
       {
@@ -1100,7 +1103,7 @@ namespace Skanny
           doc.Save(f);
           GetAndInsertThumbFromFilename(f);
           UpdateStatus(string.Format("PDF created. {0}", f), null, null);
-          System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); });
+          if (settings.Default.FilesToKeep > 0) { System.Threading.Tasks.Task.Run(() => { CleanScanDirectory(true); }); }
           SetViewScans();
           return;
         }
